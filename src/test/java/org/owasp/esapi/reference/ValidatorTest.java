@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -895,6 +896,33 @@ public class ValidatorTest {
     //      Test split out and moved to HTMLValidationRuleLogsTest.java & HTMLValidationRuleThrowsTest.java
     // @Test
     //public void testIsValidSafeHTML() {
+
+    /**
+     * Validator.isValidSafeHTML returned {@code true} for input that still
+     * contained unsafe markup (e.g., {@code <script>} tags) when the
+     * Validator.HtmlValidationAction property was set to "clean", luring callers
+     * into using the unsanitized input. It must no longer be callable on the
+     * {@code Validator} interface or on its reference implementation.
+     *
+     * @see <a href="https://github.com/ESAPI/esapi-java-legacy/security/advisories/GHSA-r68h-jhhj-9jvm"
+     * target="_blank" rel="noreferrer noopener">GitHub Security Advisory: Validator.isValidSafeHTML
+     * is being deprecated and will be deleted in 1 year</a>
+     */
+    @Test
+    public void testIsValidSafeHTMLRemoved() {
+        System.out.println("testIsValidSafeHTMLRemoved");
+        Class<?>[] classes = { Validator.class, DefaultValidator.class, ESAPI.validator().getClass() };
+        for (Class<?> clazz : classes) {
+            for (Method method : clazz.getMethods()) {
+                assertFalse(clazz.getName() + " must not expose " + method,
+                        "isValidSafeHTML".equals(method.getName()));
+            }
+            for (Method method : clazz.getDeclaredMethods()) {
+                assertFalse(clazz.getName() + " must not declare " + method,
+                        "isValidSafeHTML".equals(method.getName()));
+            }
+        }
+    }
 
     @Test
     public void testSafeReadLine() {
